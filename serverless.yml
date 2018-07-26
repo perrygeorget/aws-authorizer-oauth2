@@ -1,0 +1,219 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: oauth2
+
+custom:
+  salt: "add some salt"
+  server:
+    environment:
+      REGION: ${self:provider.region}
+      STAGE: ${self:provider.stage}
+      DYNAMODB_CREDENTIALS_TABLE: ${self:service}-${self:provider.stage}-credentials
+      DYNAMODB_OAUTH_AUTHORIZATIONS_TABLE: ${self:service}-${self:provider.stage}-oAuthAuthorizations
+      DYNAMODB_OAUTH_CLIENTS_TABLE: ${self:service}-${self:provider.stage}-oAuthClients
+      DYNAMODB_OAUTH_ACCESS_TOKENS_TABLE: ${self:service}-${self:provider.stage}-oAuthAccessTokens
+      DYNAMODB_OAUTH_REFRESH_TOKENS_TABLE: ${self:service}-${self:provider.stage}-oAuthRefreshTokens
+      LOG_LEVEL: debug
+      SALT: ${self:custom.salt}
+  client:
+    environment:
+      REGION: ${self:provider.region}
+      STAGE: ${self:provider.stage}
+      LOG_LEVEL: debug
+  dynamodb:
+    readCapacityUnits: 5
+    writeCapacityUnits: 5
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+
+  stage: dev
+  region: us-west-2
+  deploymentBucket: build-${self:service}
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Resource: "*"
+      Action:
+        - "cloudwatch:*"
+        - "dynamodb:*"
+        - "logs:CreateLogGroup"
+        - "logs:CreateLogStream"
+        - "logs:PutLogEvents"
+
+package:
+  exclude:
+     - .idea
+     - .gitignore
+     - .serverless
+     - .eslintignore
+     - .eslintrc
+     - bin/**
+     - lib/__mocks__/**
+     - coverage/**
+     - test/**
+     - README.md
+     - yarn.lock
+     - yarn-error.log
+  individually: true
+
+plugins:
+  - serverless-plugin-include-dependencies
+  - serverless-dynamodb-local
+  - serverless-offline
+
+functions:
+  token:
+    handler: src/authorizationServer/lambda.tokenHandler
+    events:
+      - http:
+          path: token
+          method: post
+    environment: ${self:custom.server.environment}
+  authorize:
+    handler: src/authorizationServer/lambda.authorizeHandler
+    events:
+      - http:
+          path: authorize
+          method: get
+    environment: ${self:custom.server.environment}
+  authorizer:
+    handler: src/authorizationServer/lambda.bearerTokenAuthorizer
+    environment: ${self:custom.server.environment}
+
+  callback:
+    handler: src/resourceServer/lambda.callbackHandler
+    events:
+      - http:
+          path: callback
+          method: any
+    environment: ${self:custom.client.environment}
+  protected:
+    handler: src/resourceServer/lambda.protectedHandler
+    events:
+      - http:
+          path: protected
+          method: any
+          authorizer: authorizer
+    environment: ${self:custom.server.environment}
+
+resources:
+  Resources:
+    oAuthClients:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: client_id
+            AttributeType: S
+          - AttributeName: user_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: client_id
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: UserIdClientIdGSI
+            KeySchema:
+              - AttributeName: user_id
+                KeyType: HASH
+              - AttributeName: client_id
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
+              WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
+        ProvisionedThroughput:
+          ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
+          WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
+        TableName: ${self:service}-${self:provider.stage}-oAuthClients
+    oAuthAuthorizations:
+      Type: AWS::DynamoDB::Table
+      DependsOn: oAuthClients
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: code
+            AttributeType: S
+        KeySchema:
+          - AttributeName: code
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
+          WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
+        TableName: ${self:service}-${self:provider.stage}-oAuthAuthorizations
+        TimeToLiveSpecification:
+          AttributeName: code_expires_on
+          Enabled: true
+    oAuthAccessTokens:
+      Type: AWS::DynamoDB::Table
+      DependsOn: oAuthAuthorizations
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: access_token
+            AttributeType: S
+        KeySchema:
+          - AttributeName: access_token
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
+          WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
+        TableName: ${self:service}-${self:provider.stage}-oAuthAccessTokens
+        TimeToLiveSpecification:
+          AttributeName: access_token_expires_on
+          Enabled: true
+    oAuthRefreshTokens:
+      Type: AWS::DynamoDB::Table
+      DependsOn: oAuthAccessTokens
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: refresh_token
+            AttributeType: S
+        KeySchema:
+          - AttributeName: refresh_token
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
+          WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
+        TableName: ${self:service}-${self:provider.stage}-oAuthRefreshTokens
+        TimeToLiveSpecification:
+          AttributeName: refresh_token_expires_on
+          Enabled: true
+    credentials:
+      Type: AWS::DynamoDB::Table
+      DependsOn: oAuthRefreshTokens
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: IdUsernameGSI
+            KeySchema:
+              - AttributeName: id
+                KeyType: HASH
+              - AttributeName: username
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
+              WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
+        ProvisionedThroughput:
+          ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
+          WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
+        TableName: ${self:service}-${self:provider.stage}-credentials
