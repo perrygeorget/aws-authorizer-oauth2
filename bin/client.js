@@ -1,17 +1,12 @@
 'use strict';
 
-const crypto = require('crypto');
-
 const _ = require('lodash');
 const program = require('commander');
 const uuid = require('uuid').v4;
 const Table = require('cli-table');
 
 const logger = require('../src/lib/logger').factory('clients');
-
-function generateSecret() {
-    return crypto.createHash('sha256').update(uuid()).update('season salt').digest('hex');
-}
+const utils = require('../src/lib/utils');
 
 function init() {
     logger.debug(`stage = ${program.stage}`);
@@ -78,7 +73,7 @@ const create = async (username, description, options) => {
     const clients = require('../src/lib/clients/index');
 
     const client = uuid();
-    const secret = generateSecret();
+    const secret = utils.generateSecret();
 
     const user = await credentials.get(username);
 
@@ -121,7 +116,7 @@ const update = async (client, username, description, options) => {
         throw new Error('Client not found');
     }
 
-    const secret = options.secret ? generateSecret() : item.secret;
+    const secret = options.secret ? utils.generateSecret() : item.secret;
 
     const grants = generateGrants(options);
 
@@ -151,7 +146,7 @@ const list = () => {
     const clients = require('../src/lib/clients/index');
 
     const table = new Table({
-        head: ['client', 'client_secret', 'user_id', 'grants', 'redirect_uris', 'description'],
+        head: ['client_id', 'client_secret', 'user_id', 'grants', 'redirect_uris', 'description'],
     });
 
     clients.list()

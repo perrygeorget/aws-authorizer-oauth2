@@ -46,15 +46,36 @@ describe('config', () => {
         test('encrypting returns something different than what was input', () => {
             const encrypted = utils.encrypt(raw);
 
-            expect(encrypted).not.toEqual(raw)
+            expect(encrypted).not.toEqual(raw);
         });
 
         test('decrypting restuns the original input', () => {
             const encrypted = utils.encrypt(raw);
             const decrypted = utils.decrypt(encrypted);
 
-            expect(decrypted).toEqual(raw)
+            expect(decrypted).toEqual(raw);
 
-        })
-    })
+        });
+    });
+
+    describe('generateSecret', () => {
+        test('generates a secret', () => {
+            const secret = utils.generateSecret();
+
+            expect(secret).toEqual(expect.any(String));
+        });
+
+        test('generates a secret or 32 character or more length', () => {
+            const secret = utils.generateSecret();
+
+            expect(secret).toEqual(expect.stringMatching(/^\w{32,}$/));
+        });
+
+        test('be random', () => {
+            const generateSecret1 = utils.generateSecret();
+            const generateSecret2 = utils.generateSecret();
+
+            expect(generateSecret1).not.toEqual(generateSecret2);
+        });
+    });
 });

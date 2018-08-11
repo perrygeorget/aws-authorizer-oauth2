@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 
 const sha1 = require('sha1');
+const uuid = require('uuid').v4;
 
 const config = require('./config');
 
@@ -25,4 +26,8 @@ exports.decrypt = text => {
     dec += decipher.final('utf8');
 
     return dec;
-}
+};
+
+exports.generateSecret = () => {
+    return crypto.createHash('sha256').update(uuid()).update('season salt').digest('hex');
+};

@@ -75,6 +75,13 @@ plugins:
   - serverless-offline
 
 functions:
+  clients:
+    handler: src/lambda/clients.handler
+    environment: ${self:custom.server.environment}
+  credentials:
+    handler: src/lambda/credentials.handler
+    environment: ${self:custom.server.environment}
+    
   token:
     handler: src/authorizationServer/lambda.tokenHandler
     events:

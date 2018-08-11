@@ -45,7 +45,7 @@
     "dynamodb:shell": "open http://localhost:8000/shell/",
     "authorize": "node ./bin/authorize.js",
     "client": "node ./bin/client.js",
-    "credentials": "node ./bin/credentials.js"
+    "credential": "node ./bin/credential.js"
   },
   "jest": {
     "roots": [
