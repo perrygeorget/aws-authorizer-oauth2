@@ -76,7 +76,7 @@ These include scripts to:
 Every event has an `action` and `params`.
 
 | Attribute | Description | Default |
-| --------- | ----------- | ------- | ------- |
+| --------- | ----------- | ------- |
 | action    | Action to be performed | _undefined_ |
 | params    | Parameters for the action to be performed | _undefined_ |
 
@@ -181,7 +181,7 @@ Commands:
 Every event has an `action` and `params`.
 
 | Attribute | Description | Default |
-| --------- | ----------- | ------- | ------- |
+| --------- | ----------- | ------- |
 | action    | Action to be performed | _undefined_ |
 | params    | Parameters for the action to be performed | _undefined_ |
 
