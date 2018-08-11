@@ -76,13 +76,14 @@ These include scripts to:
 Every event has an `action` and `params`.
 
 | Attribute | Description | Default |
-|-----------|-------------|---------|---------|
+| --------- | ----------- | ------- | ------- |
 | action    | Action to be performed | _undefined_ |
 | params    | Parameters for the action to be performed | _undefined_ |
 
 Response:
 
 | Attribute | Description |
+| --------- | ----------- |
 | status | Either "ok" for success or "error" for error |
 | response | Object returned with a "ok" status |
 | error | Object returned with a "error" status |
@@ -93,7 +94,7 @@ Response:
 `event.params`:
 
 | Attribute | Description | Default | Example |
-|-----------|-------------|---------|---------|
+| --------- | ----------- | ------- | ------- |
 | username | The username for the credential | _undefined_ | "homer" |
 
 `response`:
@@ -105,7 +106,7 @@ TODO
 `event.params`:
 
 | Attribute | Description | Default | Example |
-|-----------|-------------|---------|---------|
+| --------- | ----------- | ------- | ------- |
 | id | The id for the credential | _undefined_ | "00000000-0000-0000-0000-000000000000" |
 
 `response`:
@@ -117,7 +118,7 @@ TODO
 `event.params`:
 
 | Attribute | Description | Default | Example |
-|-----------|-------------|---------|---------|
+| --------- | ----------- | ------- | ------- |
 | id | The id of the user | _undefined_ | "00000000-0000-0000-0000-000000000000" |
 | username | The username for the credential | _undefined_ | "homer" |
 | password | The password for the credential | _undefined_ | "beer.n.donuts.4ever" |
@@ -131,7 +132,7 @@ TODO
 `event.params`:
 
 | Attribute | Description | Default | Example |
-|-----------|-------------|---------|---------|
+| --------- | ----------- | ------- | ------- |
 | username | The username for the credential | _undefined_ | "homer" |
 
 `response`:
@@ -180,13 +181,14 @@ Commands:
 Every event has an `action` and `params`.
 
 | Attribute | Description | Default |
-|-----------|-------------|---------|---------|
+| --------- | ----------- | ------- | ------- |
 | action    | Action to be performed | _undefined_ |
 | params    | Parameters for the action to be performed | _undefined_ |
 
 Response:
 
 | Attribute | Description |
+| --------- | ----------- |
 | status | Either "ok" for success or "error" for error |
 | response | Object returned with a "ok" status |
 | error | Object returned with a "error" status |
@@ -197,7 +199,7 @@ Response:
 `event.params`:
 
 | Attribute | Description | Default | Example |
-|-----------|-------------|---------|---------|
+| --------- | ----------- |-------- | ------- |
 | client_id | The id for the client | _undefined_ | "00000000-0000-0000-0000-000000000000" |
 
 `response`:
@@ -209,7 +211,7 @@ TODO
 `event.params`:
 
 | Attribute | Description | Default | Example |
-|-----------|-------------|---------|---------|
+| --------- | ----------- | ------- | ------- |
 | client_id | The id for the client | <uuid> | "00000000-0000-0000-0000-000000000000" |
 | client_secret | The secret for the client | <string> | "000000000000000000000000000000000000000" |
 | user_id | The id of the user | _undefined_ | "00000000-0000-0000-0000-000000000000" |
@@ -226,7 +228,7 @@ TODO
 `event.params`:
 
 | Attribute | Description | Default | Example |
-|-----------|-------------|---------|---------|
+| --------- | ----------- | ------- | ------- |
 | client_id | The id for the client | _undefined_ |"00000000-0000-0000-0000-000000000000" |
 
 `response`:
@@ -238,7 +240,7 @@ TODO
 `event.params`:
 
 | Attribute | Description | Default | Example |
-|-----------|-------------|---------|---------|
+| --------- | ----------- | ------- | ------- |
 | user_id | The id of the user | _undefined_ |"00000000-0000-0000-0000-000000000000" |
 
 `response`:
