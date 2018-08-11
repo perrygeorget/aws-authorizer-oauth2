@@ -212,8 +212,8 @@ TODO
 
 | Attribute | Description | Default | Example |
 | --------- | ----------- | ------- | ------- |
-| client_id | The id for the client | <uuid> | "00000000-0000-0000-0000-000000000000" |
-| client_secret | The secret for the client | <string> | "000000000000000000000000000000000000000" |
+| client_id | The id for the client | \<uuid\> | "00000000-0000-0000-0000-000000000000" |
+| client_secret | The secret for the client | \<string\> | "000000000000000000000000000000000000000" |
 | user_id | The id of the user | _undefined_ | "00000000-0000-0000-0000-000000000000" |
 | description | The description for the client | _undefined_ | "lorem ipsum" |
 | grants | An array of grants to be allowed by this client | _undefined_ | \[ "password", "client_credentials", "authorization_code", "refresh_token" \] |
