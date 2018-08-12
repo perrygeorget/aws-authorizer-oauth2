@@ -71,7 +71,89 @@ These include scripts to:
 
 #### Managing Credentials
 
-#### Via Lambda
+You can run CUDL (create, update, delete, list) operations against the credentials table locally and remotely.
+
+```bash
+yarn credential --help
+``` 
+
+```text
+Usage: credential [options] [command]
+Options:
+  -V, --version                 output the version number
+  -s, --stage [value]           Stage of the service (default: dev)
+  -r, --region [value]          AWS regin (default: us-west-2)
+  -d, --debug                   Show debug information
+  -l, --local                   Executes against local resources
+  -h, --help                    output usage information
+Commands:
+  create <username> <password>  Add new credentials
+  update <username> <password>  Update existing credentials
+  delete <username>             Remove existing credentials
+  list                          List all credentials
+  env                           Dump environment variables
+```
+
+#### Managing Clients
+
+You can run CUDL (create, update, delete, list) operations against the clients table locally and remotely.
+
+```bash
+yarn client --help
+``` 
+
+```text
+Usage: client [options] [command]
+Options:
+  -V, --version                                       output the version number
+  -s, --stage [value]                                 Stage of the service (defaul
+ dev)
+  -r, --region [value]                                AWS regin (default: us-west-
+
+  -d, --debug                                         Show debug information
+  -l, --local                                         Executes against local resources
+  -h, --help                                          output usage information
+Commands:
+  create [options] <username> [description]           Add a new client
+  update [options] <client> <username> [description]  Update an existing client
+  delete <client>                                     Remove an existing client
+  list                                                List all clients
+  env                                                 Dump environment variables
+```
+
+#### Execute Sample Authorization Code Flows
+
+You can execute authorization flows via the command line againt a locally running instance or a cloud instance.
+
+```bash
+yarn authorize --help
+``` 
+
+```text
+Usage: authorize [options] [command]
+Options:
+  -V, --version                                        output the version number
+  -s, --stage [value]                                  Stage of the service (default: dev)
+  -r, --region [value]                                 AWS regin (default: us-west-2)
+  -d, --debug                                          Show debug information
+  -l, --local                                          Executes against local resources
+  -h, --help                                           output usage information
+Commands:
+  code [options] <client_id>                           Generates and authorization code using client_id and state (recommended) with optional redirect URI and scope
+  password [options] <client_id>                       Authorize using username and password
+  client_credentials [options] <client_id>             Authorize using client credentials
+  refresh_token [options] <client_id> <refresh_token>  Authorize using a refresh token, client_id, and secret
+  env                                                  Dump environment variables
+```
+
+### Lambda Functions
+
+You can manage credentials and clients stored on AWS in DynamoDB programmatically via lambda function calls.
+In your applications you would only need to store the `user_id` as a reference to the credentials.
+You would store the user profile with `user_id` as foreign key.
+You can  
+
+#### Managing Credentials
 
 Every event has an `action` and `params`.
 
@@ -89,6 +171,19 @@ Response:
 | error | Object returned with a "error" status |
 | error.message | What went wrong |
 
+##### authenticate
+
+`event.params`:
+
+| Attribute | Description | Default | Example |
+| --------- | ----------- | ------- | ------- |
+| username | The username for the credential | _undefined_ | "homer" |
+| password | The username for the credential | _undefined_ | "password" |
+
+`response`:
+
+A boolean value of `true` if authenticated by username and password, `false` otherwise.
+
 ##### get
 
 `event.params`:
@@ -99,7 +194,12 @@ Response:
 
 `response`:
 
-TODO
+An object representing the found unique credential with attributes:
+
+| Attribute | Description |
+| --------- | ----------- |
+| id | The id for the credential |
+| username | The username for the credential |
 
 ##### getById
 
@@ -111,7 +211,12 @@ TODO
 
 `response`:
 
-TODO
+An object representing the found unique credential with attributes:
+
+| Attribute | Description |
+| --------- | ----------- |
+| id | The id for the credential |
+| username | The username for the credential |
 
 ##### put
 
@@ -143,40 +248,18 @@ TODO
 
 `event.param`:
 
-n/a
+_None_
 
 `response`:
 
-TODO
+An array of objects representing credentials with attributes:
 
-#### Via Command Line
-
-You can run CUDL (create, update, delete, list) operations against the credentials table locally and remotely.
-
-```bash
-yarn credential --help
-``` 
-
-```text
-Usage: credential [options] [command]
-Options:
-  -V, --version                 output the version number
-  -s, --stage [value]           Stage of the service (default: dev)
-  -r, --region [value]          AWS regin (default: us-west-2)
-  -d, --debug                   Show debug information
-  -l, --local                   Executes against local resources
-  -h, --help                    output usage information
-Commands:
-  create <username> <password>  Add new credentials
-  update <username> <password>  Update existing credentials
-  delete <username>             Remove existing credentials
-  list                          List all credentials
-  env                           Dump environment variables
-```
+| Attribute | Description |
+| --------- | ----------- |
+| id | The id for the credential |
+| username | The username for the credential |
 
 #### Managing Clients
-
-#### Via Lambda
 
 Every event has an `action` and `params`.
 
@@ -229,7 +312,7 @@ TODO
 
 | Attribute | Description | Default | Example |
 | --------- | ----------- | ------- | ------- |
-| client_id | The id for the client | _undefined_ |"00000000-0000-0000-0000-000000000000" |
+| client_id | The id for the client | _undefined_ | "00000000-0000-0000-0000-000000000000" |
 
 `response`:
 
@@ -241,7 +324,7 @@ TODO
 
 | Attribute | Description | Default | Example |
 | --------- | ----------- | ------- | ------- |
-| user_id | The id of the user | _undefined_ |"00000000-0000-0000-0000-000000000000" |
+| user_id | The id of the user | _undefined_ | "00000000-0000-0000-0000-000000000000" |
 
 `response`:
 
@@ -251,60 +334,19 @@ TODO
 
 `event.param`:
 
-n/a
+_None_
 
 `response`:
 
 TODO
 
-#### Via Command Line
+## CloudFormation Stack
 
-You can run CUDL (create, update, delete, list) operations against the clients table locally and remotely.
+Some information is exported to allow for extension of this oauth2 and authentication implementaiton.
 
-```bash
-yarn client --help
-``` 
+### Exports
 
-```text
-Usage: client [options] [command]
-Options:
-  -V, --version                                       output the version number
-  -s, --stage [value]                                 Stage of the service (defaul
- dev)
-  -r, --region [value]                                AWS regin (default: us-west-
-
-  -d, --debug                                         Show debug information
-  -l, --local                                         Executes against local resources
-  -h, --help                                          output usage information
-Commands:
-  create [options] <username> [description]           Add a new client
-  update [options] <client> <username> [description]  Update an existing client
-  delete <client>                                     Remove an existing client
-  list                                                List all clients
-  env                                                 Dump environment variables
-```
-
-#### Execute Sample Authorization Code Flows
-
-You can execute authorization flows via the command line againt a locally running instance or a cloud instance.
-
-```bash
-yarn authorize --help
-``` 
-
-```text
-Usage: authorize [options] [command]
-Options:
-  -V, --version                                        output the version number
-  -s, --stage [value]                                  Stage of the service (default: dev)
-  -r, --region [value]                                 AWS regin (default: us-west-2)
-  -d, --debug                                          Show debug information
-  -l, --local                                          Executes against local resources
-  -h, --help                                           output usage information
-Commands:
-  code [options] <client_id>                           Generates and authorization code using client_id and state (recommended) with optional redirect URI and scope
-  password [options] <client_id>                       Authorize using username and password
-  client_credentials [options] <client_id>             Authorize using client credentials
-  refresh_token [options] <client_id> <refresh_token>  Authorize using a refresh token, client_id, and secret
-  env                                                  Dump environment variables
-```
+| Name | Description | Example |
+| ---- | ----------- | ------- |
+| CredentialsTableName-{stage} | Name of the DynamoDB credentials table | CredentialsTableName-dev | 
+| OAuthClientsTableName-{stage} | Name of the DynamoDB oAuth clients table | OAuthClientsTableName-dev | 

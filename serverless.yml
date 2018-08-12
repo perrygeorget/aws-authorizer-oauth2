@@ -224,3 +224,12 @@ resources:
           ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
           WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
         TableName: ${self:service}-${self:provider.stage}-credentials
+  Outputs:
+    CredentialsTableNameExport:
+      Value: ${self:service}-${self:provider.stage}-credentials
+      Export:
+        Name: CredentialsTableName-${self:provider.stage}
+    OAuthClientsTableNameExport:
+      Value: ${self:service}-${self:provider.stage}-oAuthClients
+      Export:
+        Name: OAuthClientsTableName-${self:provider.stage}

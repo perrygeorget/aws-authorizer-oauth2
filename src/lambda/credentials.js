@@ -2,12 +2,33 @@
 
 const _ = require('lodash');
 const Promise = require('bluebird');
+const utils = require('../lib/utils');
 const uuid = require('uuid').v4;
 
 const credentials = require('../lib/credentials');
 
 function doCall(operation, event) {
-    if (operation === 'get') {
+    if (operation === 'authenticate') {
+        const username = _.get(event, 'params.username');
+        const password = _.get(event, 'params.password');
+
+        if (_.isNil(username)) {
+            return Promise.resolve(false);
+        }
+
+        if (_.isNil(password)) {
+            return Promise.resolve(false);
+        }
+
+        return credentials.get(username)
+            .then(response => {
+                if (_.isNil(response)) {
+                    return false;
+                }
+
+                return utils.hashPassword(password) === response.password;
+            });
+    } else if (operation === 'get') {
         const username = _.get(event, 'params.username');
 
         return credentials.get(username)
