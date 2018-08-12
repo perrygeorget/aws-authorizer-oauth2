@@ -15,25 +15,33 @@ service: oauth2
 
 custom:
   salt: 'add some salt'
+  stage: ${opt:stage, self:provider.stage}
   server:
     environment:
       REGION: ${self:provider.region}
-      STAGE: ${self:provider.stage}
-      DYNAMODB_CREDENTIALS_TABLE: ${self:service}-${self:provider.stage}-credentials
-      DYNAMODB_OAUTH_AUTHORIZATIONS_TABLE: ${self:service}-${self:provider.stage}-oAuthAuthorizations
-      DYNAMODB_OAUTH_CLIENTS_TABLE: ${self:service}-${self:provider.stage}-oAuthClients
-      DYNAMODB_OAUTH_ACCESS_TOKENS_TABLE: ${self:service}-${self:provider.stage}-oAuthAccessTokens
-      DYNAMODB_OAUTH_REFRESH_TOKENS_TABLE: ${self:service}-${self:provider.stage}-oAuthRefreshTokens
+      STAGE: ${self:custom.stage}
+      DYNAMODB_CREDENTIALS_TABLE:
+        Ref: CredentialsTable
+      DYNAMODB_OAUTH_AUTHORIZATIONS_TABLE:
+        Ref: OAuthAuthorizationsTable
+      DYNAMODB_OAUTH_CLIENTS_TABLE:
+        Ref: OAuthClientsTable
+      DYNAMODB_OAUTH_ACCESS_TOKENS_TABLE:
+        Ref: OAuthAccessTokensTable
+      DYNAMODB_OAUTH_REFRESH_TOKENS_TABLE:
+        Ref: OAuthRefreshTokensTable
       LOG_LEVEL: debug
-      SALT: ${self:custom.salt}
+      SALT: ${env:SALT, self:custom.salt}
   client:
     environment:
       REGION: ${self:provider.region}
-      STAGE: ${self:provider.stage}
+      STAGE: ${self:custom.stage}
       LOG_LEVEL: debug
   dynamodb:
     readCapacityUnits: 5
     writeCapacityUnits: 5
+    readCapacityUnitsMax: 100
+    writeCapacityUnitsMax: 100
 
 provider:
   name: aws
@@ -45,7 +53,7 @@ provider:
 
   iamRoleStatements:
     - Effect: Allow
-      Resource: "*"
+      Resource: '*'
       Action:
         - 'cloudwatch:*'
         - 'dynamodb:*'
@@ -145,7 +153,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
           WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
-        TableName: ${self:service}-${self:provider.stage}-oAuthClients
+        TableName: ${self:service}-${self:custom.stage}-oAuthClients
     OAuthAuthorizationsTable:
       Type: 'AWS::DynamoDB::Table'
       DependsOn: OAuthClientsTable
@@ -159,7 +167,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
           WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
-        TableName: ${self:service}-${self:provider.stage}-oAuthAuthorizations
+        TableName: ${self:service}-${self:custom.stage}-oAuthAuthorizations
         TimeToLiveSpecification:
           AttributeName: code_expires_on
           Enabled: true
@@ -176,7 +184,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
           WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
-        TableName: ${self:service}-${self:provider.stage}-oAuthAccessTokens
+        TableName: ${self:service}-${self:custom.stage}-oAuthAccessTokens
         TimeToLiveSpecification:
           AttributeName: access_token_expires_on
           Enabled: true
@@ -193,7 +201,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
           WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
-        TableName: ${self:service}-${self:provider.stage}-oAuthRefreshTokens
+        TableName: ${self:service}-${self:custom.stage}-oAuthRefreshTokens
         TimeToLiveSpecification:
           AttributeName: refresh_token_expires_on
           Enabled: true
@@ -224,7 +232,7 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
           WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
-        TableName: ${self:service}-${self:provider.stage}-credentials
+        TableName: ${self:service}-${self:custom.stage}-credentials
     ScalingRole:
       Type: 'AWS::IAM::Role'
       Properties:
@@ -257,8 +265,8 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: CredentialsTable
       Properties:
-        MaxCapacity: 100
-        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        MaxCapacity: ${self:custom.dynamodb.writeCapacityUnitsMax}
+        MinCapacity: ${self:custom.dynamodb.writeCapacityUnits}
         ResourceId:
           "Fn::Join":
             - /
@@ -287,8 +295,8 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: CredentialsTable
       Properties:
-        MaxCapacity: 100
-        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        MaxCapacity: ${self:custom.dynamodb.writeCapacityUnitsMax}
+        MinCapacity: ${self:custom.dynamodb.writeCapacityUnits}
         ResourceId:
           "Fn::Join":
             - /
@@ -305,7 +313,7 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: CredentialsTable
       Properties:
-        MaxCapacity: 100
+        MaxCapacity: ${self:custom.dynamodb.readCapacityUnitsMax}
         MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
         ResourceId:
           "Fn::Join":
@@ -335,7 +343,7 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: CredentialsTable
       Properties:
-        MaxCapacity: 100
+        MaxCapacity: ${self:custom.dynamodb.readCapacityUnitsMax}
         MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
         ResourceId:
           "Fn::Join":
@@ -353,8 +361,8 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: OAuthClientsTable
       Properties:
-        MaxCapacity: 100
-        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        MaxCapacity: ${self:custom.dynamodb.writeCapacityUnitsMax}
+        MinCapacity: ${self:custom.dynamodb.writeCapacityUnits}
         ResourceId:
           "Fn::Join":
             - /
@@ -383,8 +391,8 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: OAuthClientsTable
       Properties:
-        MaxCapacity: 100
-        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        MaxCapacity: ${self:custom.dynamodb.writeCapacityUnitsMax}
+        MinCapacity: ${self:custom.dynamodb.writeCapacityUnits}
         ResourceId:
           "Fn::Join":
             - /
@@ -401,7 +409,7 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: OAuthClientsTable
       Properties:
-        MaxCapacity: 100
+        MaxCapacity: ${self:custom.dynamodb.readCapacityUnitsMax}
         MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
         ResourceId:
           "Fn::Join":
@@ -431,7 +439,7 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: OAuthClientsTable
       Properties:
-        MaxCapacity: 100
+        MaxCapacity: ${self:custom.dynamodb.readCapacityUnitsMax}
         MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
         ResourceId:
           "Fn::Join":
@@ -449,8 +457,8 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: OAuthAuthorizationsTable
       Properties:
-        MaxCapacity: 100
-        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        MaxCapacity: ${self:custom.dynamodb.writeCapacityUnitsMax}
+        MinCapacity: ${self:custom.dynamodb.writeCapacityUnits}
         ResourceId:
           "Fn::Join":
             - /
@@ -479,7 +487,7 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: OAuthAuthorizationsTable
       Properties:
-        MaxCapacity: 100
+        MaxCapacity: ${self:custom.dynamodb.readCapacityUnitsMax}
         MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
         ResourceId:
           "Fn::Join":
@@ -509,8 +517,8 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: OAuthAccessTokensTable
       Properties:
-        MaxCapacity: 100
-        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        MaxCapacity: ${self:custom.dynamodb.writeCapacityUnitsMax}
+        MinCapacity: ${self:custom.dynamodb.writeCapacityUnits}
         ResourceId:
           "Fn::Join":
             - /
@@ -539,7 +547,7 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: OAuthAccessTokensTable
       Properties:
-        MaxCapacity: 100
+        MaxCapacity: ${self:custom.dynamodb.readCapacityUnitsMax}
         MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
         ResourceId:
           "Fn::Join":
@@ -569,8 +577,8 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: OAuthRefreshTokensTable
       Properties:
-        MaxCapacity: 100
-        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        MaxCapacity: ${self:custom.dynamodb.writeCapacityUnitsMax}
+        MinCapacity: ${self:custom.dynamodb.writeCapacityUnits}
         ResourceId:
           "Fn::Join":
             - /
@@ -599,7 +607,7 @@ resources:
       Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
       DependsOn: OAuthRefreshTokensTable
       Properties:
-        MaxCapacity: 100
+        MaxCapacity: ${self:custom.dynamodb.readCapacityUnitsMax}
         MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
         ResourceId:
           "Fn::Join":
@@ -630,17 +638,17 @@ resources:
       Value:
         Ref: CredentialsTable
       Export:
-        Name: CredentialsTableName-${self:provider.stage}
+        Name: CredentialsTableName-${self:custom.stage}
     CredentialsLambdaFunctionNameExport:
       Value:
         Ref: CredentialsLambdaFunction
       Export:
-        Name: CredentialsLambdaFunctionName-${self:provider.stage}
+        Name: CredentialsLambdaFunctionName-${self:custom.stage}
     ClientsLambdaFunctionNameExport:
       Value:
         Ref: ClientsLambdaFunction
       Export:
-        Name: ClientsLambdaFunctionName-${self:provider.stage}
+        Name: ClientsLambdaFunctionName-${self:custom.stage}
     ServiceEndpoint:
       Export:
-        Name: OAuth2ServiceInternalEndpoint-${self:provider.stage}
+        Name: OAuth2ServiceInternalEndpoint-${self:custom.stage}
