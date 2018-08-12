@@ -349,4 +349,6 @@ Some information is exported to allow for extension of this oauth2 and authentic
 | Name | Description | Example |
 | ---- | ----------- | ------- |
 | CredentialsTableName-{stage} | Name of the DynamoDB credentials table | CredentialsTableName-dev | 
-| OAuthClientsTableName-{stage} | Name of the DynamoDB oAuth clients table | OAuthClientsTableName-dev | 
+| CredentialsLambdaFunctionName-{stage} | Name of the credentials lambda function | CredentialsLambdaFunctionName-dev | 
+| ClientsLambdaFunctionName-{stage} | Name of the oauth2 clients lambda function | ClientsLambdaFunctionName-dev | 
+| OAuth2ServiceInternalEndpoint-{stage} | The endpoint to use internally | OAuth2ServiceInternalEndpoint-dev | 

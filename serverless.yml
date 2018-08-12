@@ -14,7 +14,7 @@
 service: oauth2
 
 custom:
-  salt: "add some salt"
+  salt: 'add some salt'
   server:
     environment:
       REGION: ${self:provider.region}
@@ -44,14 +44,14 @@ provider:
   deploymentBucket: build-${self:service}
 
   iamRoleStatements:
-    - Effect: "Allow"
+    - Effect: Allow
       Resource: "*"
       Action:
-        - "cloudwatch:*"
-        - "dynamodb:*"
-        - "logs:CreateLogGroup"
-        - "logs:CreateLogStream"
-        - "logs:PutLogEvents"
+        - 'cloudwatch:*'
+        - 'dynamodb:*'
+        - 'logs:CreateLogGroup'
+        - 'logs:CreateLogStream'
+        - 'logs:PutLogEvents'
 
 package:
   exclude:
@@ -100,6 +100,7 @@ functions:
     handler: src/authorizationServer/lambda.bearerTokenAuthorizer
     environment: ${self:custom.server.environment}
 
+  # TODO: This should be a separate serverless template using output CloudFormation variables
   callback:
     handler: src/resourceServer/lambda.callbackHandler
     events:
@@ -118,8 +119,8 @@ functions:
 
 resources:
   Resources:
-    oAuthClients:
-      Type: AWS::DynamoDB::Table
+    OAuthClientsTable:
+      Type: 'AWS::DynamoDB::Table'
       Properties:
         AttributeDefinitions:
           - AttributeName: client_id
@@ -145,9 +146,9 @@ resources:
           ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
           WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
         TableName: ${self:service}-${self:provider.stage}-oAuthClients
-    oAuthAuthorizations:
-      Type: AWS::DynamoDB::Table
-      DependsOn: oAuthClients
+    OAuthAuthorizationsTable:
+      Type: 'AWS::DynamoDB::Table'
+      DependsOn: OAuthClientsTable
       Properties:
         AttributeDefinitions:
           - AttributeName: code
@@ -162,9 +163,9 @@ resources:
         TimeToLiveSpecification:
           AttributeName: code_expires_on
           Enabled: true
-    oAuthAccessTokens:
-      Type: AWS::DynamoDB::Table
-      DependsOn: oAuthAuthorizations
+    OAuthAccessTokensTable:
+      Type: 'AWS::DynamoDB::Table'
+      DependsOn: OAuthAuthorizationsTable
       Properties:
         AttributeDefinitions:
           - AttributeName: access_token
@@ -179,9 +180,9 @@ resources:
         TimeToLiveSpecification:
           AttributeName: access_token_expires_on
           Enabled: true
-    oAuthRefreshTokens:
-      Type: AWS::DynamoDB::Table
-      DependsOn: oAuthAccessTokens
+    OAuthRefreshTokensTable:
+      Type: 'AWS::DynamoDB::Table'
+      DependsOn: OAuthAccessTokensTable
       Properties:
         AttributeDefinitions:
           - AttributeName: refresh_token
@@ -196,9 +197,9 @@ resources:
         TimeToLiveSpecification:
           AttributeName: refresh_token_expires_on
           Enabled: true
-    credentials:
-      Type: AWS::DynamoDB::Table
-      DependsOn: oAuthRefreshTokens
+    CredentialsTable:
+      Type: 'AWS::DynamoDB::Table'
+      DependsOn: OAuthRefreshTokensTable
       Properties:
         AttributeDefinitions:
           - AttributeName: username
@@ -224,12 +225,422 @@ resources:
           ReadCapacityUnits: ${self:custom.dynamodb.readCapacityUnits}
           WriteCapacityUnits: ${self:custom.dynamodb.writeCapacityUnits}
         TableName: ${self:service}-${self:provider.stage}-credentials
+    ScalingRole:
+      Type: 'AWS::IAM::Role'
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - application-autoscaling.amazonaws.com
+              Action:
+                - 'sts:AssumeRole'
+        Path: /
+        Policies:
+          - PolicyName: root
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'dynamodb:DescribeTable'
+                    - 'dynamodb:UpdateTable'
+                    - 'cloudwatch:PutMetricAlarm'
+                    - 'cloudwatch:DescribeAlarms'
+                    - 'cloudwatch:GetMetricStatistics'
+                    - 'cloudwatch:SetAlarmState'
+                    - 'cloudwatch:DeleteAlarms'
+                  Resource: '*'
+    CredentialsTableWriteCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: CredentialsTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: CredentialsTable
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:table:WriteCapacityUnits'
+        ServiceNamespace: dynamodb
+    CredentialsTableWriteScalingPolicy:
+      Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+      DependsOn: CredentialsTable
+      Properties:
+        PolicyName: WriteAutoScalingPolicy
+        PolicyType: TargetTrackingScaling
+        ScalingTargetId:
+          Ref: CredentialsTableWriteCapacityScalableTarget
+        TargetTrackingScalingPolicyConfiguration:
+          TargetValue: 70
+          ScaleInCooldown: 60
+          ScaleOutCooldown: 60
+          PredefinedMetricSpecification:
+            PredefinedMetricType: DynamoDBWriteCapacityUtilization
+    CredentialsIndexWriteCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: CredentialsTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: CredentialsTable
+              - index
+              - IdUsernameGSI
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:index:WriteCapacityUnits'
+        ServiceNamespace: dynamodb
+    CredentialsTableReadCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: CredentialsTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: CredentialsTable
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:table:ReadCapacityUnits'
+        ServiceNamespace: dynamodb
+    CredentialsTableReadScalingPolicy:
+      Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+      DependsOn: CredentialsTable
+      Properties:
+        PolicyName: ReadAutoScalingPolicy
+        PolicyType: TargetTrackingScaling
+        ScalingTargetId:
+          Ref: CredentialsTableReadCapacityScalableTarget
+        TargetTrackingScalingPolicyConfiguration:
+          TargetValue: 70
+          ScaleInCooldown: 60
+          ScaleOutCooldown: 60
+          PredefinedMetricSpecification:
+            PredefinedMetricType: DynamoDBReadCapacityUtilization
+    CredentialsIndexReadCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: CredentialsTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: CredentialsTable
+              - index
+              - IdUsernameGSI
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:index:ReadCapacityUnits'
+        ServiceNamespace: dynamodb
+    OAuthClientsTableWriteCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: OAuthClientsTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: OAuthClientsTable
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:table:WriteCapacityUnits'
+        ServiceNamespace: dynamodb
+    OAuthClientsTableWriteScalingPolicy:
+      Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+      DependsOn: OAuthClientsTable
+      Properties:
+        PolicyName: WriteAutoScalingPolicy
+        PolicyType: TargetTrackingScaling
+        ScalingTargetId:
+          Ref: OAuthClientsTableWriteCapacityScalableTarget
+        TargetTrackingScalingPolicyConfiguration:
+          TargetValue: 70
+          ScaleInCooldown: 60
+          ScaleOutCooldown: 60
+          PredefinedMetricSpecification:
+            PredefinedMetricType: DynamoDBWriteCapacityUtilization
+    OAuthClientsIndexWriteCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: OAuthClientsTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: OAuthClientsTable
+              - index
+              - UserIdClientIdGSI
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:index:WriteCapacityUnits'
+        ServiceNamespace: dynamodb
+    OAuthClientsTableReadCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: OAuthClientsTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: OAuthClientsTable
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:table:ReadCapacityUnits'
+        ServiceNamespace: dynamodb
+    OAuthClientsTableReadScalingPolicy:
+      Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+      DependsOn: OAuthClientsTable
+      Properties:
+        PolicyName: ReadAutoScalingPolicy
+        PolicyType: TargetTrackingScaling
+        ScalingTargetId:
+          Ref: OAuthClientsTableReadCapacityScalableTarget
+        TargetTrackingScalingPolicyConfiguration:
+          TargetValue: 70
+          ScaleInCooldown: 60
+          ScaleOutCooldown: 60
+          PredefinedMetricSpecification:
+            PredefinedMetricType: DynamoDBReadCapacityUtilization
+    OAuthClientsIndexReadCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: OAuthClientsTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: OAuthClientsTable
+              - index
+              - UserIdClientIdGSI
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:index:ReadCapacityUnits'
+        ServiceNamespace: dynamodb
+    OAuthAuthorizationsTableWriteCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: OAuthAuthorizationsTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: OAuthAuthorizationsTable
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:table:WriteCapacityUnits'
+        ServiceNamespace: dynamodb
+    OAuthAuthorizationsTableWriteScalingPolicy:
+      Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+      DependsOn: OAuthAuthorizationsTable
+      Properties:
+        PolicyName: WriteAutoScalingPolicy
+        PolicyType: TargetTrackingScaling
+        ScalingTargetId:
+          Ref: OAuthAuthorizationsTableWriteCapacityScalableTarget
+        TargetTrackingScalingPolicyConfiguration:
+          TargetValue: 70
+          ScaleInCooldown: 60
+          ScaleOutCooldown: 60
+          PredefinedMetricSpecification:
+            PredefinedMetricType: DynamoDBWriteCapacityUtilization
+    OAuthAuthorizationsTableReadCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: OAuthAuthorizationsTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: OAuthAuthorizationsTable
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:table:ReadCapacityUnits'
+        ServiceNamespace: dynamodb
+    OAuthAuthorizationsTableReadScalingPolicy:
+      Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+      DependsOn: OAuthAuthorizationsTable
+      Properties:
+        PolicyName: ReadAutoScalingPolicy
+        PolicyType: TargetTrackingScaling
+        ScalingTargetId:
+          Ref: OAuthAuthorizationsTableReadCapacityScalableTarget
+        TargetTrackingScalingPolicyConfiguration:
+          TargetValue: 70
+          ScaleInCooldown: 60
+          ScaleOutCooldown: 60
+          PredefinedMetricSpecification:
+            PredefinedMetricType: DynamoDBReadCapacityUtilization
+    OAuthAccessTokensTableWriteCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: OAuthAccessTokensTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: OAuthAccessTokensTable
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:table:WriteCapacityUnits'
+        ServiceNamespace: dynamodb
+    OAuthAccessTokensTableWriteScalingPolicy:
+      Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+      DependsOn: OAuthAccessTokensTable
+      Properties:
+        PolicyName: WriteAutoScalingPolicy
+        PolicyType: TargetTrackingScaling
+        ScalingTargetId:
+          Ref: OAuthAccessTokensTableWriteCapacityScalableTarget
+        TargetTrackingScalingPolicyConfiguration:
+          TargetValue: 70
+          ScaleInCooldown: 60
+          ScaleOutCooldown: 60
+          PredefinedMetricSpecification:
+            PredefinedMetricType: DynamoDBWriteCapacityUtilization
+    OAuthAccessTokensTableReadCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: OAuthAccessTokensTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: OAuthAccessTokensTable
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:table:ReadCapacityUnits'
+        ServiceNamespace: dynamodb
+    OAuthAccessTokensTableReadScalingPolicy:
+      Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+      DependsOn: OAuthAccessTokensTable
+      Properties:
+        PolicyName: ReadAutoScalingPolicy
+        PolicyType: TargetTrackingScaling
+        ScalingTargetId:
+          Ref: OAuthAccessTokensTableReadCapacityScalableTarget
+        TargetTrackingScalingPolicyConfiguration:
+          TargetValue: 70
+          ScaleInCooldown: 60
+          ScaleOutCooldown: 60
+          PredefinedMetricSpecification:
+            PredefinedMetricType: DynamoDBReadCapacityUtilization
+    OAuthRefreshTokensTableWriteCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: OAuthRefreshTokensTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: OAuthRefreshTokensTable
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:table:WriteCapacityUnits'
+        ServiceNamespace: dynamodb
+    OAuthRefreshTokensTableWriteScalingPolicy:
+      Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+      DependsOn: OAuthRefreshTokensTable
+      Properties:
+        PolicyName: WriteAutoScalingPolicy
+        PolicyType: TargetTrackingScaling
+        ScalingTargetId:
+          Ref: OAuthRefreshTokensTableWriteCapacityScalableTarget
+        TargetTrackingScalingPolicyConfiguration:
+          TargetValue: 70
+          ScaleInCooldown: 60
+          ScaleOutCooldown: 60
+          PredefinedMetricSpecification:
+            PredefinedMetricType: DynamoDBWriteCapacityUtilization
+    OAuthRefreshTokensTableReadCapacityScalableTarget:
+      Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
+      DependsOn: OAuthRefreshTokensTable
+      Properties:
+        MaxCapacity: 100
+        MinCapacity: ${self:custom.dynamodb.readCapacityUnits}
+        ResourceId:
+          "Fn::Join":
+            - /
+            -
+              - table
+              - Ref: OAuthRefreshTokensTable
+        RoleARN:
+          "Fn::GetAtt": [ ScalingRole, Arn ]
+        ScalableDimension: 'dynamodb:table:ReadCapacityUnits'
+        ServiceNamespace: dynamodb
+    OAuthRefreshTokensTableReadScalingPolicy:
+      Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+      DependsOn: OAuthRefreshTokensTable
+      Properties:
+        PolicyName: ReadAutoScalingPolicy
+        PolicyType: TargetTrackingScaling
+        ScalingTargetId:
+          Ref: OAuthRefreshTokensTableReadCapacityScalableTarget
+        TargetTrackingScalingPolicyConfiguration:
+          TargetValue: 70
+          ScaleInCooldown: 60
+          ScaleOutCooldown: 60
+          PredefinedMetricSpecification:
+            PredefinedMetricType: DynamoDBReadCapacityUtilization
   Outputs:
     CredentialsTableNameExport:
-      Value: ${self:service}-${self:provider.stage}-credentials
+      Value:
+        Ref: CredentialsTable
       Export:
         Name: CredentialsTableName-${self:provider.stage}
-    OAuthClientsTableNameExport:
-      Value: ${self:service}-${self:provider.stage}-oAuthClients
+    CredentialsLambdaFunctionNameExport:
+      Value:
+        Ref: CredentialsLambdaFunction
       Export:
-        Name: OAuthClientsTableName-${self:provider.stage}
+        Name: CredentialsLambdaFunctionName-${self:provider.stage}
+    ClientsLambdaFunctionNameExport:
+      Value:
+        Ref: ClientsLambdaFunction
+      Export:
+        Name: ClientsLambdaFunctionName-${self:provider.stage}
+    ServiceEndpoint:
+      Export:
+        Name: OAuth2ServiceInternalEndpoint-${self:provider.stage}
