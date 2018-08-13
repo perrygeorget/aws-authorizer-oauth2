@@ -74,8 +74,6 @@ program
         init();
         logger.debug(`code ${client_id} ${options['redirect-uri']} ${options.scope}`);
 
-        const password = await passwordPrompt('password: ');
-
         const apiGateway = new AWS.APIGateway({
             region: process.env['REGION'],
         });
@@ -100,6 +98,9 @@ program
         logger.debug({ restApi, client, user }, 'got required data');
 
         const baseURL = program.local ? 'http://localhost:3000/' : `https://${restApi.id}.execute-api.us-west-2.amazonaws.com/${program.stage}/`;
+
+        console.log(`username: ${user.username}`);
+        const password = await passwordPrompt('password: ');
 
         console.log(`Using Basic Auth for "${user.username}"`);
         console.log('...');
@@ -164,8 +165,6 @@ program
         init();
         logger.debug(`password ${client_id} ${options.scope}`);
 
-        const password = await passwordPrompt('password: ');
-
         const apiGateway = new AWS.APIGateway({
             region: process.env['REGION'],
         });
@@ -190,6 +189,9 @@ program
         logger.debug({ restApi, client, user }, 'got required data');
 
         const baseURL = program.local ? 'http://localhost:3000/' : `https://${restApi.id}.execute-api.us-west-2.amazonaws.com/${program.stage}/`;
+
+        console.log(`username: ${user.username}`);
+        const password = await passwordPrompt('password: ');
 
         console.log(`Using Basic Auth for client`);
         console.log('...');
