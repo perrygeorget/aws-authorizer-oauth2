@@ -23,6 +23,7 @@
     "eslint-plugin-jest": "^21.18.0",
     "jest": "^23.4.1",
     "password-prompt": "^1.0.7",
+    "pre-commit": "^1.2.2",
     "serverless": "^1.14.0",
     "serverless-dynamodb-local": "^0.2.30",
     "serverless-offline": "^3.14.0",
@@ -43,6 +44,10 @@
     "dynamodb:install": "yarn sls dynamodb install",
     "dynamodb:migrate": "yarn sls dynamodb migrate",
     "dynamodb:shell": "open http://localhost:8000/shell/",
+    "jmeter:install": "test -e apache-jmeter-4.0 && rm -Rf apache-jmeter-4.0; curl http://www-us.apache.org/dist//jmeter/binaries/apache-jmeter-4.0.tgz | tar -zxv",
+    "jmeter:gui": "mkdir -p performance/report; ./apache-jmeter-4.0/bin/jmeter -t Test-Plan.jmx",
+    "jmeter:run": "mkdir -p performance/report; ./apache-jmeter-4.0/bin/jmeter -n -t Test-Plan.jmx -l ./performance/JMeter-Results.csv -e -o ./performance/report/",
+    "jmeter:clean": "rm -Rf performance",
     "authorize": "node ./bin/authorize.js",
     "client": "node ./bin/client.js",
     "credential": "node ./bin/credential.js"
@@ -61,6 +66,10 @@
     ],
     "testURL": "http://localhost/"
   },
+  "pre-commit": [
+    "lint",
+    "test"
+  ],
   "repository": {
     "type": "git",
     "url": "git@github.com:perrygeorget/aws-authorizer-oauth2.git"

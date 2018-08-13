@@ -59,7 +59,7 @@ function printTokenResponse(tokenResponse) {
 program
     .version('0.1.0')
     .option('-s, --stage [value]', 'Stage of the service', 'dev')
-    .option('-r, --region [value]', 'AWS regin', 'us-west-2')
+    .option('-r, --region [value]', 'AWS region', 'us-west-2')
     .option('-d, --debug', 'Show debug information')
     .option('-l, --local', 'Executes against local resources');
 
@@ -74,8 +74,9 @@ program
         init();
         logger.debug(`code ${client_id} ${options['redirect-uri']} ${options.scope}`);
 
+        const region = process.env['REGION'];
         const apiGateway = new AWS.APIGateway({
-            region: process.env['REGION'],
+            region,
         });
         const clients = require('../src/lib/clients/index');
         const credentials = require('../src/lib/credentials/index');
@@ -97,7 +98,7 @@ program
 
         logger.debug({ restApi, client, user }, 'got required data');
 
-        const baseURL = program.local ? 'http://localhost:3000/' : `https://${restApi.id}.execute-api.us-west-2.amazonaws.com/${program.stage}/`;
+        const baseURL = program.local ? 'http://localhost:3000/' : `https://${restApi.id}.execute-api.${region}.amazonaws.com/${program.stage}/`;
 
         console.log(`username: ${user.username}`);
         const password = await passwordPrompt('password: ');
@@ -165,8 +166,9 @@ program
         init();
         logger.debug(`password ${client_id} ${options.scope}`);
 
+        const region = process.env['REGION'];
         const apiGateway = new AWS.APIGateway({
-            region: process.env['REGION'],
+            region,
         });
         const clients = require('../src/lib/clients/index');
         const credentials = require('../src/lib/credentials/index');
@@ -188,7 +190,7 @@ program
 
         logger.debug({ restApi, client, user }, 'got required data');
 
-        const baseURL = program.local ? 'http://localhost:3000/' : `https://${restApi.id}.execute-api.us-west-2.amazonaws.com/${program.stage}/`;
+        const baseURL = program.local ? 'http://localhost:3000/' : `https://${restApi.id}.execute-api.${region}.amazonaws.com/${program.stage}/`;
 
         console.log(`username: ${user.username}`);
         const password = await passwordPrompt('password: ');
@@ -235,8 +237,9 @@ program
         init();
         logger.debug(`client_credentials ${client_id} ${options.scope}`);
 
+        const region = process.env['REGION'];
         const apiGateway = new AWS.APIGateway({
-            region: process.env['REGION'],
+            region,
         });
         const clients = require('../src/lib/clients/index');
 
@@ -256,7 +259,7 @@ program
 
         logger.debug({ restApi, client }, 'got required data');
 
-        const baseURL = program.local ? 'http://localhost:3000/' : `https://${restApi.id}.execute-api.us-west-2.amazonaws.com/${program.stage}/`;
+        const baseURL = program.local ? 'http://localhost:3000/' : `https://${restApi.id}.execute-api.${region}.amazonaws.com/${program.stage}/`;
 
         console.log(`Using Basic Auth for client`);
         console.log('...');
@@ -308,8 +311,9 @@ program
         init();
         logger.debug(`refresh_token ${refresh_token} ${client_id} ${options.clientInPost} ${options.scope}`);
 
+        const region = process.env['REGION'];
         const apiGateway = new AWS.APIGateway({
-            region: process.env['REGION'],
+            region,
         });
         const clients = require('../src/lib/clients/index');
 
@@ -329,7 +333,7 @@ program
 
         logger.debug({ restApi, client }, 'got required data');
 
-        const baseURL = program.local ? 'http://localhost:3000/' : `https://${restApi.id}.execute-api.us-west-2.amazonaws.com/${program.stage}/`;
+        const baseURL = program.local ? 'http://localhost:3000/' : `https://${restApi.id}.execute-api.${region}.amazonaws.com/${program.stage}/`;
 
         console.log(`Using Basic Auth for client`);
         console.log('...');

@@ -67,3 +67,6 @@ typings/
 # Serverless
 .serverless
 
+# JMeter
+apache-jmeter-4.0
+performance/

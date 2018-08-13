@@ -1,6 +1,5 @@
 'use strict';
 
-const _ = require('lodash');
 const dynamodbAttrValue = require('dynamodb-data-types').AttributeValue;
 const Promise = require('bluebird');
 

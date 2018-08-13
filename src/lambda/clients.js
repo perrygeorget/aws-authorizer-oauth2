@@ -2,6 +2,7 @@
 
 const _ = require('lodash');
 const Promise = require('bluebird');
+const uuid = require('uuid').v4;
 
 const clients = require('../lib/clients');
 const utils = require('../lib/utils');

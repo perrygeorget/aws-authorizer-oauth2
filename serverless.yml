@@ -19,17 +19,12 @@ custom:
   server:
     environment:
       REGION: ${self:provider.region}
-      STAGE: ${self:custom.stage}
-      DYNAMODB_CREDENTIALS_TABLE:
-        Ref: CredentialsTable
-      DYNAMODB_OAUTH_AUTHORIZATIONS_TABLE:
-        Ref: OAuthAuthorizationsTable
-      DYNAMODB_OAUTH_CLIENTS_TABLE:
-        Ref: OAuthClientsTable
-      DYNAMODB_OAUTH_ACCESS_TOKENS_TABLE:
-        Ref: OAuthAccessTokensTable
-      DYNAMODB_OAUTH_REFRESH_TOKENS_TABLE:
-        Ref: OAuthRefreshTokensTable
+      STAGE: ${self:provider.stage}
+      DYNAMODB_CREDENTIALS_TABLE: ${self:service}-${self:provider.stage}-credentials
+      DYNAMODB_OAUTH_AUTHORIZATIONS_TABLE: ${self:service}-${self:provider.stage}-oAuthAuthorizations
+      DYNAMODB_OAUTH_CLIENTS_TABLE: ${self:service}-${self:provider.stage}-oAuthClients
+      DYNAMODB_OAUTH_ACCESS_TOKENS_TABLE: ${self:service}-${self:provider.stage}-oAuthAccessTokens
+      DYNAMODB_OAUTH_REFRESH_TOKENS_TABLE: ${self:service}-${self:provider.stage}-oAuthRefreshTokens
       LOG_LEVEL: debug
       SALT: ${env:SALT, self:custom.salt}
   client:
@@ -63,7 +58,8 @@ provider:
 
 package:
   exclude:
-     - .idea
+     - .idea/**
+     - aws-authorizer-oauth2.iml
      - .gitignore
      - .serverless
      - .eslintignore
@@ -75,6 +71,10 @@ package:
      - README.md
      - yarn.lock
      - yarn-error.log
+     - apache-jmeter-4.0/**
+     - jmeter.log
+     - Test-Plan.jmx
+     - performance/**
   individually: true
 
 plugins:
