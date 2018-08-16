@@ -1,6 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
+const passwordPrompt = require('password-prompt');
 const program = require('commander');
 const uuid = require('uuid').v4;
 const Promise = require('bluebird');
@@ -45,9 +46,9 @@ function init() {
 }
 
 
-const create = async (username, password) => {
+const create = async (username) => {
     init();
-    logger.debug(`create ${username} ${password}`);
+    logger.debug(`create ${username}`);
 
     const credentials = require('../src/lib/credentials/index');
 
@@ -58,14 +59,17 @@ const create = async (username, password) => {
        return
     }
 
+    console.log(`username: ${username}`);
+    const password = await passwordPrompt('password: ');
+
     const hashedPassword = utils.hashPassword(password);
 
     credentials.put(uuid(), username, hashedPassword);
 };
 
-const update = async (username, password) => {
+const update = async (username) => {
     init();
-    logger.debug(`update ${username} ${password}`);
+    logger.debug(`update ${username}`);
 
     const credentials = require('../src/lib/credentials/index');
 
@@ -75,6 +79,9 @@ const update = async (username, password) => {
         console.error('ERROR: Credentials not found');
         return
     }
+
+    console.log(`username: ${username}`);
+    const password = await passwordPrompt('password: ');
 
     logger.debug({ salt: config.salt() }, 'Salting password');
 
@@ -159,12 +166,12 @@ program
     .option('-l, --local', 'Executes against local resources');
 
 program
-    .command('create <username> <password>')
+    .command('create <username>')
     .description('Add new credentials')
     .action(create);
 
 program
-    .command('update <username> <password>')
+    .command('update <username>')
     .description('Update existing credentials')
     .action(update);
 

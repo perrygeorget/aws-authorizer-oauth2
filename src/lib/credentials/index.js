@@ -1,7 +1,7 @@
 'use strict';
 
-const dynamodbAttrValue = require('dynamodb-data-types').AttributeValue;
 const _ = require('lodash');
+const dynamodbAttrValue = require('dynamodb-data-types').AttributeValue;
 
 const config = require('../../../src/lib/config');
 const dynamodb = require('../../../src/lib/persistence/dynamodb');
