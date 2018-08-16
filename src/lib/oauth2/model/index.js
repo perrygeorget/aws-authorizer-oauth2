@@ -314,7 +314,7 @@ exports.revokeAuthorizationCode = async function (code) {
 
     logger.debug({ result }, 'deleted authorization');
 
-    return !_.isEmpty(result);
+    return true;
 };
 
 exports.verifyScope = function (token, scope) {
