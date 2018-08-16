@@ -298,19 +298,7 @@
         <stringProp name="ThreadGroup.delay"></stringProp>
       </ThreadGroup>
       <hashTree>
-        <AuthManager guiclass="AuthPanel" testclass="AuthManager" testname="HTTP Authorization Manager" enabled="true">
-          <collectionProp name="AuthManager.auth_list">
-            <elementProp name="" elementType="Authorization">
-              <stringProp name="Authorization.url">${ENDPOINT_PROTOCOL}://${ENDPOINT_HOST}:${ENDPOINT_PORT}</stringProp>
-              <stringProp name="Authorization.username">${USERNAME}</stringProp>
-              <stringProp name="Authorization.password">${PASSWORD}</stringProp>
-              <stringProp name="Authorization.domain"></stringProp>
-              <stringProp name="Authorization.realm"></stringProp>
-            </elementProp>
-          </collectionProp>
-        </AuthManager>
-        <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Code HTTP Request" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Authorization HTTP Request" enabled="true">
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments">
               <elementProp name="response_type" elementType="HTTPArgument">
@@ -357,43 +345,141 @@
           <stringProp name="HTTPSampler.connect_timeout"></stringProp>
           <stringProp name="HTTPSampler.response_timeout"></stringProp>
         </HTTPSamplerProxy>
+        <hashTree>
+          <AuthManager guiclass="AuthPanel" testclass="AuthManager" testname="HTTP Authorization Manager" enabled="true">
+            <collectionProp name="AuthManager.auth_list">
+              <elementProp name="" elementType="Authorization">
+                <stringProp name="Authorization.url">${ENDPOINT_PROTOCOL}://${ENDPOINT_HOST}:${ENDPOINT_PORT}</stringProp>
+                <stringProp name="Authorization.username">${USERNAME}</stringProp>
+                <stringProp name="Authorization.password">${PASSWORD}</stringProp>
+                <stringProp name="Authorization.domain"></stringProp>
+                <stringProp name="Authorization.realm"></stringProp>
+              </elementProp>
+            </collectionProp>
+          </AuthManager>
+          <hashTree/>
+          <ResultCollector guiclass="TableVisualizer" testclass="ResultCollector" testname="View Results in Table" enabled="true">
+            <boolProp name="ResultCollector.error_logging">false</boolProp>
+            <objProp>
+              <name>saveConfig</name>
+              <value class="SampleSaveConfiguration">
+                <time>true</time>
+                <latency>true</latency>
+                <timestamp>true</timestamp>
+                <success>true</success>
+                <label>true</label>
+                <code>true</code>
+                <message>true</message>
+                <threadName>true</threadName>
+                <dataType>true</dataType>
+                <encoding>false</encoding>
+                <assertions>true</assertions>
+                <subresults>true</subresults>
+                <responseData>false</responseData>
+                <samplerData>false</samplerData>
+                <xml>false</xml>
+                <fieldNames>true</fieldNames>
+                <responseHeaders>false</responseHeaders>
+                <requestHeaders>false</requestHeaders>
+                <responseDataOnError>false</responseDataOnError>
+                <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+                <assertionsResultsToSave>0</assertionsResultsToSave>
+                <bytes>true</bytes>
+                <sentBytes>true</sentBytes>
+                <threadCounts>true</threadCounts>
+                <idleTime>true</idleTime>
+                <connectTime>true</connectTime>
+              </value>
+            </objProp>
+            <stringProp name="filename">./performance/JMeter-Results-Authorization.csv</stringProp>
+          </ResultCollector>
+          <hashTree/>
+        </hashTree>
+        <RegexExtractor guiclass="RegexExtractorGui" testclass="RegexExtractor" testname="Regular Expression Extractor" enabled="true">
+          <stringProp name="RegexExtractor.useHeaders">true</stringProp>
+          <stringProp name="RegexExtractor.refname">CODE</stringProp>
+          <stringProp name="RegexExtractor.regex">code=(\w+)</stringProp>
+          <stringProp name="RegexExtractor.template">$1$</stringProp>
+          <stringProp name="RegexExtractor.default"></stringProp>
+          <stringProp name="RegexExtractor.match_number">1</stringProp>
+          <boolProp name="RegexExtractor.default_empty_value">true</boolProp>
+        </RegexExtractor>
         <hashTree/>
-        <ResultCollector guiclass="TableVisualizer" testclass="ResultCollector" testname="View Results in Table" enabled="true">
-          <boolProp name="ResultCollector.error_logging">false</boolProp>
-          <objProp>
-            <name>saveConfig</name>
-            <value class="SampleSaveConfiguration">
-              <time>true</time>
-              <latency>true</latency>
-              <timestamp>true</timestamp>
-              <success>true</success>
-              <label>true</label>
-              <code>true</code>
-              <message>true</message>
-              <threadName>true</threadName>
-              <dataType>true</dataType>
-              <encoding>false</encoding>
-              <assertions>true</assertions>
-              <subresults>true</subresults>
-              <responseData>false</responseData>
-              <samplerData>false</samplerData>
-              <xml>false</xml>
-              <fieldNames>true</fieldNames>
-              <responseHeaders>false</responseHeaders>
-              <requestHeaders>false</requestHeaders>
-              <responseDataOnError>false</responseDataOnError>
-              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
-              <assertionsResultsToSave>0</assertionsResultsToSave>
-              <bytes>true</bytes>
-              <sentBytes>true</sentBytes>
-              <threadCounts>true</threadCounts>
-              <idleTime>true</idleTime>
-              <connectTime>true</connectTime>
-            </value>
-          </objProp>
-          <stringProp name="filename">./performance/JMeter-Results-Authorization-Code.csv</stringProp>
-        </ResultCollector>
-        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Authorization Code HTTP Request" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">grant_type=authorization_code&amp;code=${CODE}&amp;redirect_uri=${ENDPOINT_PROTOCOL}://${ENDPOINT_HOST}:${ENDPOINT_PORT}${ENDPOINT_PATH}/callback</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">${ENDPOINT_HOST}</stringProp>
+          <stringProp name="HTTPSampler.port">${ENDPOINT_PORT}</stringProp>
+          <stringProp name="HTTPSampler.protocol">${ENDPOINT_PROTOCOL}</stringProp>
+          <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+          <stringProp name="HTTPSampler.path">${ENDPOINT_PATH}/token</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.DO_MULTIPART_POST">false</boolProp>
+          <stringProp name="HTTPSampler.embedded_url_re"></stringProp>
+          <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+          <stringProp name="HTTPSampler.response_timeout"></stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <AuthManager guiclass="AuthPanel" testclass="AuthManager" testname="HTTP Authorization Manager" enabled="true">
+            <collectionProp name="AuthManager.auth_list">
+              <elementProp name="" elementType="Authorization">
+                <stringProp name="Authorization.url">${ENDPOINT_PROTOCOL}://${ENDPOINT_HOST}:${ENDPOINT_PORT}</stringProp>
+                <stringProp name="Authorization.username">${CLIENT_ID}</stringProp>
+                <stringProp name="Authorization.password">${CLIENT_SECRET}</stringProp>
+                <stringProp name="Authorization.domain"></stringProp>
+                <stringProp name="Authorization.realm"></stringProp>
+              </elementProp>
+            </collectionProp>
+          </AuthManager>
+          <hashTree/>
+          <ResultCollector guiclass="TableVisualizer" testclass="ResultCollector" testname="View Results in Table" enabled="true">
+            <boolProp name="ResultCollector.error_logging">false</boolProp>
+            <objProp>
+              <name>saveConfig</name>
+              <value class="SampleSaveConfiguration">
+                <time>true</time>
+                <latency>true</latency>
+                <timestamp>true</timestamp>
+                <success>true</success>
+                <label>true</label>
+                <code>true</code>
+                <message>true</message>
+                <threadName>true</threadName>
+                <dataType>true</dataType>
+                <encoding>false</encoding>
+                <assertions>true</assertions>
+                <subresults>true</subresults>
+                <responseData>false</responseData>
+                <samplerData>false</samplerData>
+                <xml>false</xml>
+                <fieldNames>true</fieldNames>
+                <responseHeaders>false</responseHeaders>
+                <requestHeaders>false</requestHeaders>
+                <responseDataOnError>false</responseDataOnError>
+                <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+                <assertionsResultsToSave>0</assertionsResultsToSave>
+                <bytes>true</bytes>
+                <sentBytes>true</sentBytes>
+                <threadCounts>true</threadCounts>
+                <idleTime>true</idleTime>
+                <connectTime>true</connectTime>
+              </value>
+            </objProp>
+            <stringProp name="filename">./performance/JMeter-Results-Authorization-Code.csv</stringProp>
+          </ResultCollector>
+          <hashTree/>
+        </hashTree>
       </hashTree>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Password + Refresh Token Thread Group" enabled="true">
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
