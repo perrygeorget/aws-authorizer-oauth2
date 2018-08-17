@@ -79,19 +79,23 @@ yarn credential --help
 
 ```text
 Usage: credential [options] [command]
+
 Options:
-  -V, --version                 output the version number
-  -s, --stage [value]           Stage of the service (default: dev)
-  -r, --region [value]          AWS regin (default: us-west-2)
-  -d, --debug                   Show debug information
-  -l, --local                   Executes against local resources
-  -h, --help                    output usage information
+
+  -V, --version         output the version number
+  -s, --stage [value]   Stage of the service (default: dev)
+  -r, --region [value]  AWS regin (default: us-west-2)
+  -d, --debug           Show debug information
+  -l, --local           Executes against local resources
+  -h, --help            output usage information
+
 Commands:
-  create <username> <password>  Add new credentials
-  update <username> <password>  Update existing credentials
-  delete <username>             Remove existing credentials
-  list                          List all credentials
-  env                           Dump environment variables
+
+  create <username>     Add new credentials
+  update <username>     Update existing credentials
+  delete <username>     Remove existing credentials
+  list                  List all credentials
+  env                   Dump environment variables
 ```
 
 #### Managing Clients
@@ -104,7 +108,9 @@ yarn client --help
 
 ```text
 Usage: client [options] [command]
+
 Options:
+
   -V, --version                                       output the version number
   -s, --stage [value]                                 Stage of the service (defaul
  dev)
@@ -113,7 +119,9 @@ Options:
   -d, --debug                                         Show debug information
   -l, --local                                         Executes against local resources
   -h, --help                                          output usage information
+
 Commands:
+
   create [options] <username> [description]           Add a new client
   update [options] <client> <username> [description]  Update an existing client
   delete <client>                                     Remove an existing client
@@ -131,14 +139,18 @@ yarn authorize --help
 
 ```text
 Usage: authorize [options] [command]
+
 Options:
+
   -V, --version                                        output the version number
   -s, --stage [value]                                  Stage of the service (default: dev)
   -r, --region [value]                                 AWS regin (default: us-west-2)
   -d, --debug                                          Show debug information
   -l, --local                                          Executes against local resources
   -h, --help                                           output usage information
+
 Commands:
+
   code [options] <client_id>                           Generates and authorization code using client_id and state (recommended) with optional redirect URI and scope
   password [options] <client_id>                       Authorize using username and password
   client_credentials [options] <client_id>             Authorize using client credentials
