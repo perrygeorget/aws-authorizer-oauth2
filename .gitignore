@@ -70,3 +70,10 @@ typings/
 # JMeter
 apache-jmeter-4.0
 performance/
+
+# Dynamodb Local
+.dynamodb
+
+# OSX
+.DS_Store
+
