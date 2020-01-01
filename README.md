@@ -6,7 +6,7 @@ This is an AWS Authorizer for OAuth2.  It uses DynamoDB as a scalable cloud back
 ### Requirements
 
 * AWS Account
-* Node JS 8.11.x
+* Node JS 12.x
 * yarn
 
 ### Quick Start
@@ -20,7 +20,7 @@ yarn start
 After it has started, execute in another shell:
 
 ```bash
-yarn migrate
+yarn dynamodb:migrate
 ```
 
 Now you have a clean, running OAuth2 server and client example.
@@ -52,6 +52,26 @@ Then in another process
 
 ```bash
 yarn dynamodb:migrate
+```
+
+Setup the performance test using the password "jmeter" for the credentials.
+(JMeter is configured with that password as a default.)
+
+```bash
+yarn credential -l create jmeter
+client -d -l create -C -R -A 'http://localhost:3000/callback' -P jmeter 'My test client'
+```
+
+Get the client_id and client_secret
+
+```bash
+yarn client -l list
+```
+
+Now run the test using the client_id and secret that you obtained.
+
+```bash
+yarn jmeter:run -Jclient_id=<client_id> -Jclient_secret=<client_secret>
 ```
 
 #### Against AWS Hosted DynamoDB
@@ -158,6 +178,58 @@ Commands:
   env                                                  Dump environment variables
 ```
 
+### JMeter performance test execution
+
+#### Local Setup and Execution
+
+Setup the performance test using the password "jmeter" for the credentials.
+(JMeter is configured with that password as a default.)
+
+```bash
+yarn credential -l create jmeter
+client -l create -C -R -A 'http://localhost:3000/callback' -P jmeter 'My test client'
+```
+
+Get the client_id and client_secret.
+
+```bash
+yarn client -l list
+```
+
+Now run the test using the `client_id` and `client_secret` that you obtained.
+
+```bash
+yarn jmeter:run -Jclient_id=<client_id> -Jclient_secret=<client_secret>
+``` 
+
+# Remote Setup and Execution
+
+Using the callback URL that you obtained for your deployment,
+setup the performance test using the password "jmeter" for the credentials.
+(JMeter is configured with that password as a default.)
+
+```bash
+yarn credential create jmeter
+client create -C -R -A 'https://<prefix>.execute-api.<region>.amazonaws.com/<stage>>/callback' -P jmeter 'My test client'
+```
+
+NOTE: The above URL will vary, and the above URL contains placeholders for what will vary.
+Those placeholders will be referred to below. 
+
+Get the client_id and client_secret.
+
+```bash
+yarn client list
+```
+
+Now run the test using the `client_id` and `client_secret` that you obtained.
+
+```bash
+yarn jmeter:run -Jclient_id=<client_id> -Jclient_secret=<client_secret> \
+    -Jendpoint_protocol=https -Jendpoint_host=<prefix>.execute-api.<region>.amazonaws.com \
+    -Jendpoint_port=443 -Jendpoint_path=/<stage>
+``` 
+
 ### Lambda Functions
 
 You can manage credentials and clients stored on AWS in DynamoDB programmatically via lambda function calls.
@@ -190,7 +262,7 @@ Response:
 | Attribute | Description | Default | Example |
 | --------- | ----------- | ------- | ------- |
 | username | The username for the credential | _undefined_ | "homer" |
-| password | The username for the credential | _undefined_ | "password" |
+| password | The username for the credential | _undefined_ | "dough.nuts" |
 
 `response`:
 

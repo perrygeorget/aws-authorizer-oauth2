@@ -68,7 +68,7 @@ typings/
 .serverless
 
 # JMeter
-apache-jmeter-4.0
+apache-jmeter-*
 performance/
 
 # Dynamodb Local

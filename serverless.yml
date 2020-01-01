@@ -37,6 +37,8 @@ custom:
     writeCapacityUnits: 5
     readCapacityUnitsMax: 100
     writeCapacityUnitsMax: 100
+    stages:
+      dev
 
 provider:
   name: aws
