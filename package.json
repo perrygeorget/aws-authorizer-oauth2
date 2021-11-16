@@ -16,7 +16,7 @@
     "uuid": "^3.0.1"
   },
   "devDependencies": {
-    "aws-sdk": "^2.44.0",
+    "aws-sdk": "^2.814.0",
     "cli-table": "^0.3.1",
     "commander": "^2.16.0",
     "eslint": "^5.2.0",
